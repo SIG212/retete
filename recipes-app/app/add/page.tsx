@@ -171,7 +171,11 @@ export default function AddRecipePage() {
                   {recipe.category}
                 </span>
               )}
-              <h2 style={{ margin: '8px 0 4px', fontSize: '1.3rem', fontWeight: 700, color: '#1A202C' }}>{recipe.title}</h2>
+              <input
+                value={recipe.title}
+                onChange={e => setRecipe({ ...recipe, title: e.target.value })}
+                style={{ width: '100%', fontSize: '1.3rem', fontWeight: 700, color: '#1A202C', border: 'none', borderBottom: '2px solid #E2E8F0', outline: 'none', padding: '4px 0', marginBottom: '4px', fontFamily: 'Outfit', background: 'transparent', boxSizing: 'border-box' }}
+              />
               {recipe.description && <p style={{ margin: 0, fontSize: '0.9rem', color: '#718096' }}>{recipe.description}</p>}
               <div style={{ display: 'flex', gap: '16px', marginTop: '8px', fontSize: '0.8rem', color: '#94A3B8' }}>
                 {recipe.prep_time && <span>Prep: {recipe.prep_time} min</span>}
