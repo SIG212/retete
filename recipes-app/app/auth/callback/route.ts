@@ -30,5 +30,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect('https://organic-journey-x5rqgww9j54vc57g-3000.app.github.dev/dashboard')
+  return NextResponse.redirect('https://retete-nu.vercel.app/dashboard')
 }

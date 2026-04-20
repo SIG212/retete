@@ -8,7 +8,7 @@ export default function LoginPage() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `https://organic-journey-x5rqgww9j54vc57g-3000.app.github.dev/auth/callback`
+        redirectTo: `https://retete-nu.vercel.app/auth/callback`
       }
     })
   }
