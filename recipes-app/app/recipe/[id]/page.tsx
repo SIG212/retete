@@ -14,13 +14,13 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
 
   if (!recipe) notFound()
 
-  const { data: community } = await supabase
+  const { data: communityRaw } = await supabase
     .from('recipes')
-    .select('id, title, description, category, cook_time, base_servings, ingredients')
+    .select('id, title, description, category, cook_time, base_servings, ingredients, steps')
     .eq('is_public', true)
     .neq('id', id)
     .limit(6)
     .order('created_at', { ascending: false })
 
-  return <RecipeDetail recipe={recipe} community={community || []} />
+  return <RecipeDetail recipe={recipe} community={communityRaw || []} />
 }
