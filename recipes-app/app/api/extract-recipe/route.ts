@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-const FLASK_URL = 'https://retete-7p0b.onrender.com'
+const FLASK_URL = 'https://retete-production.up.railway.app'
 
 async function getTextFromSource(mode: string, input: string): Promise<string> {
   if (mode === 'instagram') {
