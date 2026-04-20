@@ -29,7 +29,7 @@ function fmt(amount: number, scale: number) {
 
 function detectMode(input: string): 'instagram' | 'url' | 'text' {
   const trimmed = input.trim()
-  if (trimmed.includes('instagram.com/')) return 'instagram'
+  if (trimmed.includes('instagram.com/') || trimmed.includes('facebook.com/') || trimmed.includes('fb.watch/')) return 'instagram'
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return 'url'
   return 'text'
 }
@@ -47,7 +47,7 @@ export default function AddRecipePage() {
   const mode = detectMode(input)
 
   const modeLabel = {
-    instagram: '📸 Instagram detectat',
+    instagram: '📸 Instagram / Facebook detectat',
     url: '🔗 URL detectat',
     text: '📝 Text'
   }
@@ -119,7 +119,7 @@ export default function AddRecipePage() {
 
         {input.trim() && mode === 'instagram' && (
           <p style={{ fontSize: '0.78rem', color: '#94A3B8', marginBottom: '4px', marginTop: '-4px' }}>
-            Reel-urile de Instagram funcționează doar dacă au rețeta în descriere (caption).
+            Postările de Instagram și Facebook funcționează doar dacă au rețeta în descriere (caption).
           </p>
         )}
         {input.trim() && (
@@ -129,7 +129,7 @@ export default function AddRecipePage() {
             </p>
             {mode === 'instagram' && (
               <p style={{ fontSize: '0.78rem', color: '#E67E22', margin: 0 }}>
-                Reel-urile de Instagram funcționează doar dacă au rețeta în descriere (caption).
+                Postările de Instagram și Facebook funcționează doar dacă au rețeta în descriere (caption).
               </p>
             )}
           </div>
