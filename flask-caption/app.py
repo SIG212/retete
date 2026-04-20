@@ -14,20 +14,26 @@ def get_caption():
     
     try:
         ydl_opts = {
-            'quiet': True,
+            'quiet': False,
             'extract_flat': True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             caption = info.get('description', '')
+            print(f"CAPTION EXTRAS: {caption[:200]}")
             
         if not caption:
-            return jsonify({'error': 'Caption gol — post privat sau URL invalid'}), 422
+            return jsonify({'error': 'Caption gol — post privat sau IP blocat de Instagram'}), 422
             
         return jsonify({'caption': caption})
     
     except Exception as e:
+        print(f"EROARE: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'ok'})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
