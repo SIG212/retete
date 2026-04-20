@@ -42,6 +42,7 @@ export default function AddRecipePage() {
   const [servings, setServings] = useState(2)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [retrying, setRetrying] = useState(false)
 
   const mode = detectMode(input)
 
@@ -51,10 +52,11 @@ export default function AddRecipePage() {
     text: '📝 Text'
   }
 
-  const extract = async () => {
+  const extract = async (isRetry = false) => {
     setLoading(true)
     setError('')
     setRecipe(null)
+    setRetrying(isRetry)
     try {
       const res = await fetch('/api/extract-recipe', {
         method: 'POST',
@@ -66,9 +68,15 @@ export default function AddRecipePage() {
       setRecipe(data)
       setServings(data.base_servings || 2)
     } catch (e: any) {
-      setError(e.message)
+      const msg = e.message || ''
+      if (msg.includes('fetch') || msg.includes('timeout') || msg.includes('network')) {
+        setError('Încearcă din nou în câteva secunde. La prima căutare, uneori serverul doarme.')
+      } else {
+        setError(msg)
+      }
     } finally {
       setLoading(false)
+      setRetrying(false)
     }
   }
 
@@ -101,7 +109,6 @@ export default function AddRecipePage() {
       </nav>
 
       <main style={{ maxWidth: '680px', margin: '0 auto', padding: '24px 16px' }}>
-
         <textarea
           placeholder="Lipește un link (Instagram, blog) sau textul rețetei direct..."
           value={input}
@@ -116,14 +123,20 @@ export default function AddRecipePage() {
           </p>
         )}
 
-        <button onClick={extract} disabled={loading || !input.trim()}
+        <button onClick={() => extract(false)} disabled={loading || !input.trim()}
           style={{ width: '100%', background: loading ? '#94A3B8' : '#1E293B', color: 'white', padding: '13px', borderRadius: '10px', border: 'none', fontFamily: 'Outfit', fontWeight: 600, fontSize: '0.95rem', cursor: loading ? 'not-allowed' : 'pointer', marginBottom: '24px' }}>
-          {loading ? 'Se extrage...' : 'Extrage rețeta'}
+          {loading ? (retrying ? 'Se reîncearcă...' : 'Se extrage...') : 'Extrage rețeta'}
         </button>
 
         {error && (
           <div style={{ background: '#FFF5F5', border: '1px solid #FED7D7', borderRadius: '8px', padding: '12px 14px', marginBottom: '16px' }}>
-            <p style={{ margin: 0, color: '#C53030', fontSize: '0.85rem' }}>{error}</p>
+            <p style={{ margin: '0 0 8px', color: '#C53030', fontSize: '0.85rem' }}>{error}</p>
+            {error.includes('hibernare') && (
+              <button onClick={() => extract(true)}
+                style={{ background: '#C53030', color: 'white', border: 'none', borderRadius: '6px', padding: '6px 14px', fontFamily: 'Outfit', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}>
+                Încearcă din nou
+              </button>
+            )}
           </div>
         )}
 
