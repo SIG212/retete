@@ -144,7 +144,7 @@ export default function AddRecipePage() {
           <div style={{ textAlign: 'center', padding: '16px 0', marginTop: '-16px', marginBottom: '8px' }}>
             <img src="https://media1.tenor.com/m/6YX4QrCXrgYAAAAd/jerry-hungry.gif" 
               alt="se extrage..." 
-              style={{ width: '120px', borderRadius: '12px' }} />
+              style={{ width: '100%', borderRadius: '12px' }} />
             <p style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '8px' }}>
               {mode === 'instagram' ? 'Se extrage din Instagram...' : 'Se analizează rețeta...'}
             </p>
