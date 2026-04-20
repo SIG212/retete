@@ -140,6 +140,17 @@ export default function AddRecipePage() {
           {loading ? (retrying ? 'Se reîncearcă...' : 'Se extrage...') : 'Extrage rețeta'}
         </button>
 
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '16px 0', marginTop: '-16px', marginBottom: '8px' }}>
+            <img src="https://media1.tenor.com/m/6YX4QrCXrgYAAAAd/jerry-hungry.gif" 
+              alt="se extrage..." 
+              style={{ width: '120px', borderRadius: '12px' }} />
+            <p style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '8px' }}>
+              {mode === 'instagram' ? 'Se extrage din Instagram...' : 'Se analizează rețeta...'}
+            </p>
+          </div>
+        )}
+
         {error && (
           <div style={{ background: '#FFF5F5', border: '1px solid #FED7D7', borderRadius: '8px', padding: '12px 14px', marginBottom: '16px' }}>
             <p style={{ margin: '0 0 8px', color: '#C53030', fontSize: '0.85rem' }}>{error}</p>
