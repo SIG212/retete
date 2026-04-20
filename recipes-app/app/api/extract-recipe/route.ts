@@ -63,7 +63,7 @@ Dacă conține o rețetă, extrage și traduce TOTUL în limba română, inclusi
   "steps": [{"id": "s1", "title": string, "content": string, "timerSeconds": number sau null}],
   "notes": string sau null
 }
-Nu inventa date. Dacă lipsește o informație pune null. Totul în română.`
+Nu inventa date. Dacă lipsește o informație pune null. Totul în română. Convertește toate unitățile imperiale în metric (cups→ml, oz→g, lb→g, °F→°C, inches→cm).`
           },
           {
             role: 'user',
