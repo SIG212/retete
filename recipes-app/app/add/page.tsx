@@ -117,10 +117,22 @@ export default function AddRecipePage() {
           style={{ width: '100%', padding: '14px 16px', borderRadius: '12px', border: '1px solid #ddd', fontFamily: 'Outfit', fontSize: '0.95rem', marginBottom: '8px', resize: 'none', boxSizing: 'border-box', lineHeight: 1.6 }}
         />
 
-        {input.trim() && (
-          <p style={{ fontSize: '0.78rem', color: '#94A3B8', marginBottom: '14px' }}>
-            {modeLabel[mode]}
+        {input.trim() && mode === 'instagram' && (
+          <p style={{ fontSize: '0.78rem', color: '#94A3B8', marginBottom: '4px', marginTop: '-4px' }}>
+            Reel-urile de Instagram funcționează doar dacă au rețeta în descriere (caption).
           </p>
+        )}
+        {input.trim() && (
+          <div style={{ marginBottom: '14px' }}>
+            <p style={{ fontSize: '0.78rem', color: '#94A3B8', margin: '0 0 4px' }}>
+              {modeLabel[mode]}
+            </p>
+            {mode === 'instagram' && (
+              <p style={{ fontSize: '0.78rem', color: '#E67E22', margin: 0 }}>
+                Reel-urile de Instagram funcționează doar dacă au rețeta în descriere (caption).
+              </p>
+            )}
+          </div>
         )}
 
         <button onClick={() => extract(false)} disabled={loading || !input.trim()}
