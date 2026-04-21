@@ -14,16 +14,21 @@ type Recipe = {
 export default function DashboardClient({ recipes }: { recipes: Recipe[] }) {
   const [query, setQuery] = useState('')
 
+  const normalize = (s: string) =>
+    s.toLowerCase()
+     .normalize('NFD')
+     .replace(/[̀-ͯ]/g, '')
+
   const filtered = recipes.filter(r => {
     if (!query.trim()) return true
-    const q = query.toLowerCase()
+    const q = normalize(query)
     const ingredientMatch = r.ingredients?.some((ing: any) =>
-      ing.name?.toLowerCase().includes(q)
+      normalize(ing.name || '').includes(q)
     )
     return (
-      r.title?.toLowerCase().includes(q) ||
-      r.description?.toLowerCase().includes(q) ||
-      r.category?.toLowerCase().includes(q) ||
+      normalize(r.title || '').includes(q) ||
+      normalize(r.description || '').includes(q) ||
+      normalize(r.category || '').includes(q) ||
       ingredientMatch
     )
   })
