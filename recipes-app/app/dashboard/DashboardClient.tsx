@@ -17,10 +17,14 @@ export default function DashboardClient({ recipes }: { recipes: Recipe[] }) {
   const filtered = recipes.filter(r => {
     if (!query.trim()) return true
     const q = query.toLowerCase()
+    const ingredientMatch = r.ingredients?.some((ing: any) =>
+      ing.name?.toLowerCase().includes(q)
+    )
     return (
       r.title?.toLowerCase().includes(q) ||
       r.description?.toLowerCase().includes(q) ||
-      r.category?.toLowerCase().includes(q)
+      r.category?.toLowerCase().includes(q) ||
+      ingredientMatch
     )
   })
 
