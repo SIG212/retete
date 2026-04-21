@@ -36,27 +36,36 @@ def get_caption():
         ydl_opts = {
             'quiet': False,
             'extract_flat': False,
+            'writeinfojson': False,
+            'getcomments': True,
         }
 
         if cookies_file:
             ydl_opts['cookiefile'] = cookies_file
+            print(f"Folosesc cookies pentru {platform}")
+        else:
+            print(f"Fara cookies pentru {platform}")
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             
-            # Log toate câmpurile disponibile
-            print(f"FIELDS: {list(info.keys())}")
-            
+            print(f"TITLE: {info.get('title')}")
+            print(f"DESCRIPTION: {info.get('description', '')[:200]}")
+            print(f"FULLTITLE: {info.get('fulltitle', '')[:200]}")
+
+            # Facebook pune textul in 'description' sau 'fulltitle'
             caption = (
                 info.get('description') or
+                info.get('fulltitle') or
                 info.get('title') or
-                info.get('comment') or
                 ''
             )
-            print(f"CAPTION ({platform}): {caption[:300]}")
+            
+            # Daca caption e doar "Facebook" sau similar, e gol
+            if caption.lower() in ['facebook', 'instagram', '']:
+                return jsonify({'error': 'Caption gol — postul nu are text sau e privat'}), 422
 
-        if not caption:
-            return jsonify({'error': 'Caption gol — post privat sau URL invalid'}), 422
+            print(f"CAPTION FINAL: {caption[:300]}")
 
         return jsonify({'caption': caption})
 
