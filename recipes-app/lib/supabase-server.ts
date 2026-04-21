@@ -10,8 +10,12 @@ export async function createServerSupabaseClient() {
       cookies: {
         getAll() { return cookieStore.getAll() },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options))
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options))
+          } catch {
+            // Ignorat in Server Components - cookies se seteaza in Route Handlers
+          }
         }
       }
     }
