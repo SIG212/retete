@@ -6,6 +6,8 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   const { id } = await params
   const supabase = await createServerSupabaseClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { data: recipe } = await supabase
     .from('recipes')
     .select('*')
@@ -16,11 +18,11 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
 
   const { data: communityRaw } = await supabase
     .from('recipes')
-    .select('id, title, description, category, cook_time, base_servings, ingredients, steps')
+    .select('id, title, description, category, cook_time, base_servings, ingredients, steps, user_id')
     .eq('is_public', true)
     .neq('id', id)
     .limit(6)
     .order('created_at', { ascending: false })
 
-  return <RecipeDetail recipe={recipe} community={communityRaw || []} />
+  return <RecipeDetail recipe={recipe} community={communityRaw || []} userId={user?.id} />
 }
