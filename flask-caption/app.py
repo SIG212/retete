@@ -42,14 +42,22 @@ def detect_platform(url):
     return 'other'
 
 def extract_with_gemini(text):
-    model = genai.GenerativeModel('gemini-2.5-flash')
-    response = model.generate_content(
-        f"{SYSTEM_PROMPT}\n\nExtrage rețeta din acest text:\n\n{text}",
-        generation_config=genai.GenerationConfig(
-            response_mime_type='application/json'
-        )
-    )
-    return json.loads(response.text)
+    import time
+    model = genai.GenerativeModel('gemini-2.5-flash-lite')
+    for attempt in range(3):
+        try:
+            response = model.generate_content(
+                f"{SYSTEM_PROMPT}\n\nExtrage rețeta din acest text:\n\n{text}",
+                generation_config=genai.GenerationConfig(
+                    response_mime_type='application/json'
+                )
+            )
+            return json.loads(response.text)
+        except Exception as e:
+            if '429' in str(e) and attempt < 2:
+                time.sleep(5)
+                continue
+            raise e
 
 @app.route('/extract', methods=['POST'])
 def extract():
