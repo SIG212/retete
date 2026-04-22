@@ -31,9 +31,13 @@ export default function RecipeDetail({ recipe, community, userId }: { recipe: Re
   const handleDelete = async () => {
     if (!confirm('Ștergi rețeta?')) return
     setDeleting(true)
-    const supabase = createClient()
-    await supabase.from('recipes').delete().eq('id', recipe.id)
-    router.push('/dashboard')
+    const res = await fetch('/api/delete-recipe', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: recipe.id })
+    })
+    if (res.ok) router.push('/dashboard')
+    else setDeleting(false)
   }
 
   const isOwner = userId && recipe.user_id === userId

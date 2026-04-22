@@ -43,9 +43,14 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
     e.stopPropagation()
     if (!confirm('Ștergi rețeta?')) return
     setDeleting(id)
-    const supabase = createClient()
-    await supabase.from('recipes').delete().eq('id', id)
-    setRecipes(prev => prev.filter(r => r.id !== id))
+    const res = await fetch('/api/delete-recipe', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    })
+    if (res.ok) {
+      setRecipes(prev => prev.filter(r => r.id !== id))
+    }
     setDeleting(null)
   }
 
