@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+export const maxDuration = 60
+
 const FLASK_URL = 'https://retete-production.up.railway.app'
 
 async function getTextFromSource(mode: string, input: string): Promise<string> {
@@ -7,17 +9,36 @@ async function getTextFromSource(mode: string, input: string): Promise<string> {
     const res = await fetch(`${FLASK_URL}/caption`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: input })
+      body: JSON.stringify({ url: input }),
+      signal: AbortSignal.timeout(45000)
     })
     const data = await res.json()
-    if (data.error) throw new Error(`Instagram: ${data.error}`)
+    if (data.error) {
+      if (data.error.includes('rate-limit') || data.error.includes('login required') || data.error.includes('not available')) {
+        throw new Error('Instagram a blocat requestul temporar. Copiază descrierea postului și lipește-o în câmpul de text.')
+      }
+      throw new Error(`Instagram: ${data.error}`)
+    }
     return data.caption
   }
 
   if (mode === 'url') {
-    const res = await fetch(input)
-    const html = await res.text()
-    return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 4000)
+    try {
+      const res = await fetch(input, {
+        signal: AbortSignal.timeout(10000),
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+      })
+      const html = await res.text()
+      if (!html.includes('challenge-platform') && !html.includes('Just a moment')) {
+        return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 4000)
+      }
+    } catch {}
+    const jinaRes = await fetch(`https://r.jina.ai/${input}`, {
+      signal: AbortSignal.timeout(20000),
+      headers: { 'Accept': 'text/plain' }
+    })
+    const text = await jinaRes.text()
+    return text.slice(0, 4000)
   }
 
   return input
@@ -51,7 +72,7 @@ export async function POST(request: Request) {
             role: 'system',
             content: `Ești un extractor de rețete. Dacă textul nu conține o rețetă clară, returnează exact: {"error": "no_recipe"}
 
-Dacă conține o rețetă, extrage și traduce TOTUL în limba română, inclusiv numele ingredientelor, titlul pașilor și descrierile. Returnează DOAR JSON valid cu structura:
+Dacă conține o rețetă, extrage și traduce TOTUL în limba română. Returnează DOAR JSON valid cu structura:
 {
   "title": string,
   "description": string,
@@ -72,7 +93,8 @@ Nu inventa date. Dacă lipsește o informație pune null. Totul în română. Co
         ],
         temperature: 0,
         response_format: { type: 'json_object' }
-      })
+      }),
+      signal: AbortSignal.timeout(45000)
     })
 
     const data = await response.json()
