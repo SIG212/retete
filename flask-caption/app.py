@@ -2,10 +2,28 @@ import yt_dlp
 from flask import Flask, request, jsonify
 import os
 import tempfile
-import requests
 import json
+import google.generativeai as genai
 
 app = Flask(__name__)
+
+genai.configure(api_key=os.environ.get('GEMINI_API_KEY', ''))
+
+SYSTEM_PROMPT = """Ești un extractor de rețete. Dacă textul nu conține o rețetă clară, returnează exact: {"error": "no_recipe"}
+
+Dacă conține o rețetă, extrage și traduce TOTUL în limba română. Returnează DOAR JSON valid cu structura:
+{
+  "title": string,
+  "description": string,
+  "category": string,
+  "base_servings": number,
+  "prep_time": number,
+  "cook_time": number,
+  "ingredients": [{"id": "0001", "name": string, "amount": number, "unit": string sau null}],
+  "steps": [{"id": "s1", "title": string, "content": string, "timerSeconds": number sau null}],
+  "notes": string sau null
+}
+Nu inventa date. Dacă lipsește o informație pune null. Totul în română. Convertește toate unitățile imperiale în metric."""
 
 def get_cookies_file(platform):
     env_var = 'INSTAGRAM_COOKIES' if platform == 'instagram' else 'FACEBOOK_COOKIES'
@@ -23,11 +41,20 @@ def detect_platform(url):
         return 'facebook'
     return 'other'
 
+def extract_with_gemini(text):
+    model = genai.GenerativeModel('gemini-2.5-flash')
+    response = model.generate_content(
+        f"{SYSTEM_PROMPT}\n\nExtrage rețeta din acest text:\n\n{text}",
+        generation_config=genai.GenerationConfig(
+            response_mime_type='application/json'
+        )
+    )
+    return json.loads(response.text)
+
 @app.route('/extract', methods=['POST'])
 def extract():
     data = request.json
     url = data.get('url')
-
     if not url:
         return jsonify({'error': 'URL lipsă'}), 400
 
@@ -36,10 +63,11 @@ def extract():
         cookies_file = get_cookies_file(platform)
 
         ydl_opts = {
-            'quiet': False,
+            'quiet': True,
             'extract_flat': True,
+            'skip_download': True,
+            'no_playlist': True,
         }
-
         if cookies_file:
             ydl_opts['cookiefile'] = cookies_file
 
@@ -50,50 +78,7 @@ def extract():
         if not caption:
             return jsonify({'error': 'Caption gol — post privat sau URL invalid'}), 422
 
-        # Extrage reteta cu DeepSeek
-        deepseek_key = os.environ.get('DEEPSEEK_API_KEY', '')
-        if not deepseek_key:
-            return jsonify({'caption': caption})
-
-        response = requests.post(
-            'https://api.deepseek.com/chat/completions',
-            headers={
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {deepseek_key}'
-            },
-            json={
-                'model': 'deepseek-chat',
-                'messages': [
-                    {
-                        'role': 'system',
-                        'content': '''Ești un extractor de rețete. Dacă textul nu conține o rețetă clară, returnează exact: {"error": "no_recipe"}
-
-Dacă conține o rețetă, extrage și traduce TOTUL în limba română. Returnează DOAR JSON valid cu structura:
-{
-  "title": string,
-  "description": string,
-  "category": string,
-  "base_servings": number,
-  "prep_time": number,
-  "cook_time": number,
-  "ingredients": [{"id": "0001", "name": string, "amount": number, "unit": string sau null}],
-  "steps": [{"id": "s1", "title": string, "content": string, "timerSeconds": number sau null}],
-  "notes": string sau null
-}
-Nu inventa date. Dacă lipsește o informație pune null. Totul în română. Convertește toate unitățile imperiale în metric.'''
-                    },
-                    {
-                        'role': 'user',
-                        'content': f'Extrage rețeta din acest text:\n\n{caption}'
-                    }
-                ],
-                'temperature': 0,
-                'response_format': {'type': 'json_object'}
-            },
-            timeout=45
-        )
-
-        recipe = json.loads(response.json()['choices'][0]['message']['content'])
+        recipe = extract_with_gemini(caption)
         return jsonify(recipe)
 
     except Exception as e:
@@ -109,7 +94,7 @@ def get_caption():
     try:
         platform = detect_platform(url)
         cookies_file = get_cookies_file(platform)
-        ydl_opts = {'quiet': False, 'extract_flat': True}
+        ydl_opts = {'quiet': True, 'extract_flat': True, 'skip_download': True, 'no_playlist': True}
         if cookies_file:
             ydl_opts['cookiefile'] = cookies_file
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
