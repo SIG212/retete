@@ -4,13 +4,13 @@ export const maxDuration = 60
 
 const FLASK_URL = 'https://retete-production.up.railway.app'
 
-async function getTextFromSource(mode: string, input: string): Promise<string> {
+async function getTextFromSource(mode: string, input: string): Promise<{ text?: string, recipe?: any }> {
   if (mode === 'instagram') {
-    const res = await fetch(`${FLASK_URL}/caption`, {
+    const res = await fetch(`${FLASK_URL}/extract`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: input }),
-      signal: AbortSignal.timeout(45000)
+      signal: AbortSignal.timeout(55000)
     })
     const data = await res.json()
     if (data.error) {
@@ -19,7 +19,7 @@ async function getTextFromSource(mode: string, input: string): Promise<string> {
       }
       throw new Error(`Instagram: ${data.error}`)
     }
-    return data.caption
+    return { recipe: data }
   }
 
   if (mode === 'url') {
@@ -30,7 +30,7 @@ async function getTextFromSource(mode: string, input: string): Promise<string> {
       })
       const html = await res.text()
       if (!html.includes('challenge-platform') && !html.includes('Just a moment')) {
-        return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 4000)
+        return { text: html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 4000) }
       }
     } catch {}
     const jinaRes = await fetch(`https://r.jina.ai/${input}`, {
@@ -38,10 +38,10 @@ async function getTextFromSource(mode: string, input: string): Promise<string> {
       headers: { 'Accept': 'text/plain' }
     })
     const text = await jinaRes.text()
-    return text.slice(0, 4000)
+    return { text: text.slice(0, 4000) }
   }
 
-  return input
+  return { text: input }
 }
 
 function isValidRecipe(recipe: any): boolean {
@@ -57,8 +57,20 @@ export async function POST(request: Request) {
   if (!input) return NextResponse.json({ error: 'Input lipsă' }, { status: 400 })
 
   try {
-    const text = await getTextFromSource(mode, input)
+    const source = await getTextFromSource(mode, input)
 
+    // Instagram returneaza deja reteta procesata de Flask
+    if (source.recipe) {
+      if (source.recipe.error === 'no_recipe') {
+        return NextResponse.json({ error: 'Nu am reușit să găsesc o rețetă în sursa indicată.' }, { status: 422 })
+      }
+      if (!isValidRecipe(source.recipe)) {
+        return NextResponse.json({ error: 'Nu am reușit să extrag rețeta. Încearcă cu Text / paste.' }, { status: 422 })
+      }
+      return NextResponse.json(source.recipe)
+    }
+
+    // URL si text merg prin DeepSeek din Next.js
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
@@ -84,11 +96,11 @@ Dacă conține o rețetă, extrage și traduce TOTUL în limba română. Returne
   "steps": [{"id": "s1", "title": string, "content": string, "timerSeconds": number sau null}],
   "notes": string sau null
 }
-Nu inventa date. Dacă lipsește o informație pune null. Totul în română. Convertește toate unitățile imperiale în metric (cups→ml, oz→g, lb→g, °F→°C, inches→cm).`
+Nu inventa date. Dacă lipsește o informație pune null. Totul în română. Convertește toate unitățile imperiale în metric.`
           },
           {
             role: 'user',
-            content: `Extrage rețeta din acest text:\n\n${text}`
+            content: `Extrage rețeta din acest text:\n\n${source.text}`
           }
         ],
         temperature: 0,

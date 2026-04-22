@@ -2,6 +2,8 @@ import yt_dlp
 from flask import Flask, request, jsonify
 import os
 import tempfile
+import requests
+import json
 
 app = Flask(__name__)
 
@@ -21,8 +23,8 @@ def detect_platform(url):
         return 'facebook'
     return 'other'
 
-@app.route('/caption', methods=['POST'])
-def get_caption():
+@app.route('/extract', methods=['POST'])
+def extract():
     data = request.json
     url = data.get('url')
 
@@ -35,11 +37,7 @@ def get_caption():
 
         ydl_opts = {
             'quiet': False,
-            'extract_flat': False,
-            'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept-Language': 'en-US,en;q=0.9',
-            }
+            'extract_flat': True,
         }
 
         if cookies_file:
@@ -47,21 +45,80 @@ def get_caption():
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            
-            print(f"TITLE: {info.get('title')}")
-            print(f"DESCRIPTION: {info.get('description', '')[:300]}")
+            caption = info.get('description', '')
 
-            caption = info.get('description') or info.get('fulltitle') or ''
-            
-            if not caption or caption.lower() in ['facebook', 'instagram']:
-                return jsonify({'error': 'Caption gol — postul nu are text sau e privat'}), 422
+        if not caption:
+            return jsonify({'error': 'Caption gol — post privat sau URL invalid'}), 422
 
-            print(f"CAPTION FINAL: {caption[:300]}")
+        # Extrage reteta cu DeepSeek
+        deepseek_key = os.environ.get('DEEPSEEK_API_KEY', '')
+        if not deepseek_key:
+            return jsonify({'caption': caption})
 
-        return jsonify({'caption': caption})
+        response = requests.post(
+            'https://api.deepseek.com/chat/completions',
+            headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {deepseek_key}'
+            },
+            json={
+                'model': 'deepseek-chat',
+                'messages': [
+                    {
+                        'role': 'system',
+                        'content': '''Ești un extractor de rețete. Dacă textul nu conține o rețetă clară, returnează exact: {"error": "no_recipe"}
+
+Dacă conține o rețetă, extrage și traduce TOTUL în limba română. Returnează DOAR JSON valid cu structura:
+{
+  "title": string,
+  "description": string,
+  "category": string,
+  "base_servings": number,
+  "prep_time": number,
+  "cook_time": number,
+  "ingredients": [{"id": "0001", "name": string, "amount": number, "unit": string sau null}],
+  "steps": [{"id": "s1", "title": string, "content": string, "timerSeconds": number sau null}],
+  "notes": string sau null
+}
+Nu inventa date. Dacă lipsește o informație pune null. Totul în română. Convertește toate unitățile imperiale în metric.'''
+                    },
+                    {
+                        'role': 'user',
+                        'content': f'Extrage rețeta din acest text:\n\n{caption}'
+                    }
+                ],
+                'temperature': 0,
+                'response_format': {'type': 'json_object'}
+            },
+            timeout=45
+        )
+
+        recipe = json.loads(response.json()['choices'][0]['message']['content'])
+        return jsonify(recipe)
 
     except Exception as e:
         print(f"EROARE: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/caption', methods=['POST'])
+def get_caption():
+    data = request.json
+    url = data.get('url')
+    if not url:
+        return jsonify({'error': 'URL lipsă'}), 400
+    try:
+        platform = detect_platform(url)
+        cookies_file = get_cookies_file(platform)
+        ydl_opts = {'quiet': False, 'extract_flat': True}
+        if cookies_file:
+            ydl_opts['cookiefile'] = cookies_file
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            caption = info.get('description', '')
+        if not caption:
+            return jsonify({'error': 'Caption gol — post privat sau URL invalid'}), 422
+        return jsonify({'caption': caption})
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/health', methods=['GET'])
