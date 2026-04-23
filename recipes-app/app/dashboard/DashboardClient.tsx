@@ -265,6 +265,18 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
           </p>
         </div>
 
+        {/* EXTRACTION LOADING GIF */}
+        {extracting && (
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <img src="https://media1.tenor.com/m/6YX4QrCXrgYAAAAd/jerry-hungry.gif"
+              alt="se extrage..."
+              style={{ width: '100%', maxWidth: '400px', borderRadius: '16px' }} />
+            <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '12px', fontWeight: 500 }}>
+              Se extrage rețeta...
+            </p>
+          </div>
+        )}
+
         {/* EXTRACTION ERROR */}
         {extractError && (
           <div style={{
@@ -513,17 +525,17 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
           </div>
         ) : (
           <div style={{ padding: '60px 0', textAlign: 'center' }}>
-            <div style={{
-              width: '52px', height: '52px', background: '#f3f4f6', borderRadius: '14px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 14px'
-            }}>
-              <svg width="22" height="22" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </div>
             {query ? (
               <>
+                <div style={{
+                  width: '52px', height: '52px', background: '#f3f4f6', borderRadius: '14px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 14px'
+                }}>
+                  <svg width="22" height="22" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                </div>
                 <p style={{ fontSize: '15px', fontWeight: 600, color: '#374151', marginBottom: '5px' }}>Nicio rețetă găsită</p>
                 <button onClick={() => setQuery('')} style={{ fontSize: '13px', color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Outfit', textDecoration: 'underline' }}>
                   Încearcă un alt termen de căutare.
@@ -531,8 +543,11 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
               </>
             ) : (
               <>
-                <p style={{ fontSize: '15px', fontWeight: 600, color: '#374151', marginBottom: '5px' }}>Nu ai rețete încă</p>
-                <a href="/add" style={{ fontSize: '13px', color: '#1a6b3c', fontWeight: 600, textDecoration: 'underline' }}>Adaugă prima ta rețetă</a>
+                <img src="https://media.tenor.com/bowl-cat-gif-17739756832503037272/tenor.gif"
+                  alt="nicio rețetă"
+                  style={{ width: '100%', maxWidth: '300px', borderRadius: '16px', marginBottom: '16px' }} />
+                <p style={{ fontSize: '18px', fontWeight: 700, color: '#374151', marginBottom: '8px' }}>Nicio rețetă adăugată</p>
+                <a href="/add" style={{ fontSize: '14px', color: '#1a6b3c', fontWeight: 600, textDecoration: 'underline' }}>Adaugă prima ta rețetă</a>
               </>
             )}
           </div>
