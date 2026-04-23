@@ -36,13 +36,13 @@ const categoryColors: Record<string, { border: string; bg: string; text: string 
   general: { border: '#d1d5db', bg: '#f3f4f6', text: '#374151' },
 }
 
-const FILTERS = [
-  { key: 'toate', label: 'Toate' },
-  { key: 'paste', label: '🍝 Paste' },
-  { key: 'desert', label: '🍮 Desert' },
-  { key: 'supe', label: '🥣 Supe' },
-  { key: 'salads', label: '🥗 Salate' },
-]
+const categoryEmojis: Record<string, string> = {
+  paste: '🍝',
+  desert: '🍮',
+  supe: '🥣',
+  salads: '🥗',
+  general: '📁',
+}
 
 function detectMode(input: string): 'instagram' | 'url' | 'text' {
   const trimmed = input.trim()
@@ -75,6 +75,22 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
   const [extractServings, setExtractServings] = useState(2)
   const [extractError, setExtractError] = useState('')
   const [saving, setSaving] = useState(false)
+
+  // Dynamic filters based on existing recipes
+  const dynamicFilters = useMemo(() => {
+    const categories = new Set<string>()
+    initialRecipes.forEach(r => {
+      const cat = (r.category || 'general').toLowerCase()
+      categories.add(cat)
+    })
+    return [
+      { key: 'toate', label: 'Toate' },
+      ...Array.from(categories).map(cat => ({
+        key: cat,
+        label: `${categoryEmojis[cat] || '📁'} ${cat.charAt(0).toUpperCase() + cat.slice(1)}`
+      }))
+    ]
+  }, [initialRecipes])
 
   const normalize = (s: string) =>
     s.toLowerCase()
@@ -430,21 +446,23 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
         </div>
 
         {/* FILTERS */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
-          {FILTERS.map(f => (
-            <button key={f.key} onClick={() => setActiveFilter(f.key)}
-              style={{
-                padding: '7px 16px', borderRadius: '999px',
-                border: `1.5px solid ${activeFilter === f.key ? '#1a6b3c' : '#e5e5e1'}`,
-                background: activeFilter === f.key ? '#1a6b3c' : '#fff',
-                fontSize: '13px', fontWeight: 600,
-                color: activeFilter === f.key ? '#fff' : '#6b7280',
-                cursor: 'pointer', fontFamily: 'Outfit', transition: 'all 0.15s'
-              }}>
-              {f.label}
-            </button>
-          ))}
-        </div>
+        {dynamicFilters.length > 1 && (
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+            {dynamicFilters.map(f => (
+              <button key={f.key} onClick={() => setActiveFilter(f.key)}
+                style={{
+                  padding: '7px 16px', borderRadius: '999px',
+                  border: `1.5px solid ${activeFilter === f.key ? '#1a6b3c' : '#e5e5e1'}`,
+                  background: activeFilter === f.key ? '#1a6b3c' : '#fff',
+                  fontSize: '13px', fontWeight: 600,
+                  color: activeFilter === f.key ? '#fff' : '#6b7280',
+                  cursor: 'pointer', fontFamily: 'Outfit', transition: 'all 0.15s'
+                }}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* RESULTS META */}
         {query && (
