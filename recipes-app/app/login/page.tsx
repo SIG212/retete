@@ -1,5 +1,6 @@
 'use client'
 import { createClient } from '@/lib/supabase'
+import Footer from '@/app/components/Footer'
 
 export default function LoginPage() {
   const supabase = createClient()
@@ -71,12 +72,7 @@ export default function LoginPage() {
         </div>
       </main>
 
-      {/* FOOTER */}
-      <footer style={{ padding: '20px', textAlign: 'center', fontSize: '0.8rem' }}>
-        <a href="https://sig212.github.io/builder" target="_blank" rel="noopener noreferrer" style={{ color: '#9ca3af', textDecoration: 'none' }}>
-          sig212.github.io/builder
-        </a>
-      </footer>
+      <Footer />
     </div>
   )
 }

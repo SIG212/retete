@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import Footer from '@/app/components/Footer'
 
 type Ingredient = { id: string; name: string; amount: number; unit?: string }
 type Step = { id: string; title: string; content: string; timerSeconds?: number }
@@ -219,6 +220,8 @@ export default function RecipeDetail({ recipe, community, userId }: { recipe: Re
           </div>
         )}
       </main>
+
+      <Footer />
     </div>
   )
 }

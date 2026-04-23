@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import Footer from '@/app/components/Footer'
 
 type Recipe = {
   id: string
@@ -588,6 +589,8 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
           </div>
         )}
       </main>
+
+      <Footer />
 
       <style jsx global>{`
         @keyframes fadeUp {

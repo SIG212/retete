@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
+import Footer from '@/app/components/Footer'
 
 export default async function HomePage() {
   const supabase = await createServerSupabaseClient()
@@ -101,12 +102,7 @@ export default async function HomePage() {
         </div>
       </main>
 
-      {/* FOOTER */}
-      <footer style={{ padding: '20px', textAlign: 'center', fontSize: '0.8rem' }}>
-        <a href="https://sig212.github.io/builder" target="_blank" rel="noopener noreferrer" style={{ color: '#9ca3af', textDecoration: 'none' }}>
-          sig212.github.io/builder
-        </a>
-      </footer>
+      <Footer />
     </div>
   )
 }
