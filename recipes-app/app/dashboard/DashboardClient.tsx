@@ -13,6 +13,21 @@ type Recipe = {
   ingredients: any[]
 }
 
+type Ingredient = { id: string; name: string; amount: number; unit?: string }
+type Step = { id: string; title: string; content: string; timerSeconds?: number }
+type RecipeJSON = {
+  title: string
+  description?: string
+  category?: string
+  base_servings?: number
+  prep_time?: number
+  cook_time?: number
+  ingredients: Ingredient[]
+  steps: Step[]
+  notes?: string
+  source_url?: string
+}
+
 const categoryColors: Record<string, { border: string; bg: string; text: string }> = {
   paste: { border: '#10b981', bg: '#d1fae5', text: '#065f46' },
   desert: { border: '#f59e0b', bg: '#fef3c7', text: '#92400e' },
@@ -29,12 +44,37 @@ const FILTERS = [
   { key: 'salads', label: '🥗 Salate' },
 ]
 
+function detectMode(input: string): 'instagram' | 'url' | 'text' {
+  const trimmed = input.trim()
+  if (trimmed.includes('instagram.com/') || trimmed.includes('facebook.com/') || trimmed.includes('fb.watch/')) return 'instagram'
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return 'url'
+  return 'text'
+}
+
+function portii(n: number) {
+  if (n === 1) return '1 porție'
+  return `${n} porții`
+}
+
+function fmt(amount: number, scale: number) {
+  const scaled = amount * scale
+  return Number.isInteger(amount) ? Math.round(scaled) : Math.round(scaled * 10) / 10
+}
+
 export default function DashboardClient({ recipes: initialRecipes }: { recipes: Recipe[] }) {
   const [query, setQuery] = useState('')
   const [recipes, setRecipes] = useState(initialRecipes)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [activeFilter, setActiveFilter] = useState('toate')
   const router = useRouter()
+
+  // Extraction state
+  const [heroInput, setHeroInput] = useState('')
+  const [extracting, setExtracting] = useState(false)
+  const [extractedRecipe, setExtractedRecipe] = useState<RecipeJSON | null>(null)
+  const [extractServings, setExtractServings] = useState(2)
+  const [extractError, setExtractError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const normalize = (s: string) =>
     s.toLowerCase()
@@ -77,10 +117,60 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
     setDeleting(null)
   }
 
+  const extract = async () => {
+    if (!heroInput.trim()) return
+    const mode = detectMode(heroInput)
+    setExtracting(true)
+    setExtractError('')
+    setExtractedRecipe(null)
+    try {
+      const res = await fetch('/api/extract-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode, input: heroInput })
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      setExtractedRecipe(data)
+      setExtractServings(data.base_servings || 2)
+    } catch (e: any) {
+      const msg = e.message || ''
+      if (msg.includes('fetch') || msg.includes('timeout') || msg.includes('network')) {
+        setExtractError('Încearcă din nou în câteva secunde. La prima căutare, uneori serverul doarme.')
+      } else {
+        setExtractError(msg)
+      }
+    } finally {
+      setExtracting(false)
+    }
+  }
+
+  const saveExtracted = async () => {
+    if (!extractedRecipe) return
+    setSaving(true)
+    setExtractError('')
+    try {
+      const res = await fetch('/api/save-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...extractedRecipe, source_url: extractedRecipe.source_url || heroInput })
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      // Refresh the page to show the new recipe
+      router.refresh()
+    } catch (e: any) {
+      setExtractError(e.message)
+      setSaving(false)
+    }
+  }
+
   const getCategoryStyle = (category?: string) => {
     const cat = (category || 'general').toLowerCase()
     return categoryColors[cat] || categoryColors.general
   }
+
+  const extractScale = extractedRecipe ? extractServings / (extractedRecipe.base_servings || 2) : 1
 
   return (
     <div style={{ minHeight: '100vh', background: '#f7f7f5', fontFamily: 'Outfit, sans-serif' }}>
@@ -136,27 +226,159 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
           <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, fontWeight: 400, maxWidth: '420px', marginBottom: '20px' }}>
             Bon apetit!
           </p>
-          <a href="/add" style={{
+
+          {/* HERO INPUT - Direct extraction */}
+          <div style={{
             display: 'flex', alignItems: 'center', gap: '10px',
             background: 'rgba(255,255,255,0.13)', border: '1px solid rgba(255,255,255,0.22)',
-            borderRadius: '14px', padding: '11px 14px', textDecoration: 'none',
-            transition: 'opacity 0.15s'
+            borderRadius: '14px', padding: '11px 14px'
           }}>
             <svg width="16" height="16" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
               <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
               <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
             </svg>
-            <span style={{ flex: 1, fontSize: '14px', color: 'rgba(255,255,255,0.38)', fontFamily: 'Outfit' }}>Adaugă link sau text...</span>
-            <span style={{
-              background: '#fff', color: '#1a6b3c', borderRadius: '8px',
-              padding: '9px 18px', fontSize: '13px', fontWeight: 700,
-              fontFamily: 'Outfit', whiteSpace: 'nowrap'
-            }}>Extrage rețeta</span>
-          </a>
+            <input
+              type="text"
+              placeholder="Adaugă link sau text..."
+              value={heroInput}
+              onChange={e => { setHeroInput(e.target.value); setExtractedRecipe(null); setExtractError('') }}
+              onKeyDown={e => { if (e.key === 'Enter') extract() }}
+              style={{
+                flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                fontFamily: 'Outfit', fontSize: '14px', color: '#fff', minWidth: 0
+              }}
+            />
+            <button
+              onClick={extract}
+              disabled={extracting || !heroInput.trim()}
+              style={{
+                background: '#fff', color: '#1a6b3c', borderRadius: '8px',
+                padding: '9px 18px', fontSize: '13px', fontWeight: 700,
+                fontFamily: 'Outfit', whiteSpace: 'nowrap', cursor: extracting ? 'not-allowed' : 'pointer',
+                opacity: extracting ? 0.7 : 1, transition: 'opacity 0.15s', border: 'none', flexShrink: 0
+              }}>
+              {extracting ? 'Se extrage...' : 'Extrage'}
+            </button>
+          </div>
           <p style={{ marginTop: '10px', fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontWeight: 400, lineHeight: 1.5 }}>
             Folosește reel-uri de Instagram (cu rețeta în caption), blog-uri sau text copy-paste
           </p>
         </div>
+
+        {/* EXTRACTION ERROR */}
+        {extractError && (
+          <div style={{
+            background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px',
+            padding: '14px 16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+          }}>
+            <p style={{ margin: 0, color: '#dc2626', fontSize: '14px' }}>{extractError}</p>
+            <button onClick={() => setExtractError('')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', fontSize: '16px', padding: '4px' }}>
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* EXTRACTED RECIPE PREVIEW */}
+        {extractedRecipe && (
+          <div style={{
+            background: 'white', borderRadius: '16px', padding: '28px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid #e5e5e1',
+            marginBottom: '32px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+              <div style={{ flex: 1 }}>
+                {extractedRecipe.category && (
+                  <span style={{
+                    background: '#d1fae5', color: '#065f46', padding: '3px 10px', borderRadius: '5px',
+                    fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em'
+                  }}>
+                    {extractedRecipe.category}
+                  </span>
+                )}
+                <h2 style={{ margin: '8px 0 6px', fontSize: '22px', fontWeight: 800, color: '#111', letterSpacing: '-0.03em' }}>{extractedRecipe.title}</h2>
+                {extractedRecipe.description && <p style={{ margin: 0, fontSize: '14px', color: '#6b7280', lineHeight: 1.6 }}>{extractedRecipe.description}</p>}
+                <div style={{ display: 'flex', gap: '16px', marginTop: '10px', fontSize: '13px', color: '#9ca3af' }}>
+                  {extractedRecipe.prep_time && <span>Prep: {extractedRecipe.prep_time} min</span>}
+                  {extractedRecipe.cook_time && <span>Gătit: {extractedRecipe.cook_time} min</span>}
+                </div>
+              </div>
+              <button onClick={() => { setExtractedRecipe(null); setHeroInput('') }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: '16px', padding: '4px', flexShrink: 0 }}>
+                ✕
+              </button>
+            </div>
+
+            <hr style={{ border: 'none', borderTop: '1px solid #e5e5e1', margin: '20px 0' }} />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <span style={{ fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#111' }}>Ingrediente</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '13px', color: '#6b7280' }}>{portii(extractServings)}</span>
+                <button onClick={() => setExtractServings(s => Math.max(1, s - 1))}
+                  style={{
+                    width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid #e5e5e1',
+                    background: 'white', cursor: 'pointer', fontWeight: 600, color: '#4A5568',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px'
+                  }}>−</button>
+                <span style={{ fontWeight: 700, fontSize: '16px', minWidth: '20px', textAlign: 'center' }}>{extractServings}</span>
+                <button onClick={() => setExtractServings(s => Math.min(20, s + 1))}
+                  style={{
+                    width: '32px', height: '32px', borderRadius: '8px', border: '1.5px solid #e5e5e1',
+                    background: 'white', cursor: 'pointer', fontWeight: 600, color: '#4A5568',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px'
+                  }}>+</button>
+              </div>
+            </div>
+
+            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {extractedRecipe.ingredients?.map((ing, i) => (
+                <li key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', borderBottom: '1px solid #f3f4f6', paddingBottom: '10px' }}>
+                  <span style={{ color: '#4A5568' }}>{ing.name}</span>
+                  <span style={{ color: '#111', fontWeight: 600 }}>{fmt(ing.amount, extractScale)} {ing.unit || ''}</span>
+                </li>
+              ))}
+            </ul>
+
+            <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#111', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mod de preparare</h3>
+            <ol style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {extractedRecipe.steps?.map((step, i) => (
+                <li key={i} style={{ display: 'flex', gap: '14px' }}>
+                  <span style={{
+                    width: '28px', height: '28px', borderRadius: '50%', background: '#d1fae5',
+                    color: '#065f46', fontSize: '12px', fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                  }}>
+                    {i + 1}
+                  </span>
+                  <div>
+                    <p style={{ margin: '0 0 4px', fontWeight: 600, fontSize: '14px', color: '#111' }}>{step.title}</p>
+                    <p style={{ margin: 0, fontSize: '14px', color: '#6b7280', lineHeight: 1.7 }}>{step.content}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+
+            {extractedRecipe.notes && (
+              <div style={{
+                background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '10px',
+                padding: '14px 16px', marginBottom: '24px'
+              }}>
+                <p style={{ margin: 0, fontSize: '14px', color: '#92400e', fontStyle: 'italic' }}>{extractedRecipe.notes}</p>
+              </div>
+            )}
+
+            <button onClick={saveExtracted} disabled={saving}
+              style={{
+                width: '100%', background: saving ? '#9ca3af' : '#1a6b3c', color: 'white',
+                padding: '14px', borderRadius: '12px', border: 'none', fontFamily: 'Outfit',
+                fontWeight: 700, fontSize: '14px', cursor: saving ? 'not-allowed' : 'pointer',
+                transition: 'background 0.15s'
+              }}>
+              {saving ? 'Se salvează...' : 'Salvează rețeta'}
+            </button>
+          </div>
+        )}
 
         {/* SECTION HEADING + SEARCH */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', gap: '16px', flexWrap: 'wrap' }}>
