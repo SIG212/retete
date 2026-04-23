@@ -102,8 +102,10 @@ export default async function HomePage() {
       </main>
 
       {/* FOOTER */}
-      <footer style={{ padding: '20px', textAlign: 'center', fontSize: '0.8rem', color: '#9ca3af' }}>
-        Făcut cu drag în România 🇷🇴
+      <footer style={{ padding: '20px', textAlign: 'center', fontSize: '0.8rem' }}>
+        <a href="https://sig212.github.io/builder" target="_blank" rel="noopener noreferrer" style={{ color: '#9ca3af', textDecoration: 'none' }}>
+          Făcut cu drag în România 🇷🇴
+        </a>
       </footer>
     </div>
   )
