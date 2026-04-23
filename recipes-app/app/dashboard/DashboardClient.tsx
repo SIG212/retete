@@ -203,17 +203,34 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
         <a href="/dashboard" style={{ fontSize: '18px', fontWeight: 800, color: '#111', letterSpacing: '-0.03em', textDecoration: 'none' }}>
           rețete<span style={{ color: '#1a6b3c' }}>.</span>
         </a>
-        <a href="/add" style={{
-          display: 'inline-flex', alignItems: 'center', gap: '6px',
-          background: '#1a6b3c', color: '#fff', border: 'none', borderRadius: '10px',
-          padding: '9px 20px', fontSize: '13px', fontWeight: 700,
-          textDecoration: 'none', cursor: 'pointer', transition: 'background 0.15s'
-        }}>
-          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24">
-            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Adaugă rețetă
-        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button onClick={async () => { const supabase = createClient(); await supabase.auth.signOut(); router.push('/login') }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              background: 'white', color: '#dc2626', border: '1.5px solid #dc2626', borderRadius: '10px',
+              padding: '8px 16px', fontSize: '13px', fontWeight: 700,
+              cursor: 'pointer', fontFamily: 'Outfit', transition: 'all 0.15s'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#fef2f2' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'white' }}
+          >
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Log out
+          </button>
+          <a href="/add" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            background: '#1a6b3c', color: '#fff', border: 'none', borderRadius: '10px',
+            padding: '9px 20px', fontSize: '13px', fontWeight: 700,
+            textDecoration: 'none', cursor: 'pointer', transition: 'background 0.15s'
+          }}>
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" viewBox="0 0 24 24">
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Adaugă rețetă
+          </a>
+        </div>
       </nav>
 
       {/* MAIN */}
