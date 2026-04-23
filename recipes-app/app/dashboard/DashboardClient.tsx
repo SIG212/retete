@@ -302,13 +302,21 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
         {/* EXTRACTION LOADING GIF */}
         {extracting && (
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <img src="https://media1.tenor.com/m/6YX4QrCXrgYAAAAd/jerry-hungry.gif"
-              alt="se extrage..."
-              style={{ width: '100%', maxWidth: '400px', borderRadius: '16px' }} />
-            <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '12px', fontWeight: 500 }}>
-              Se extrage rețeta...
-            </p>
-          </div>
+  <img
+    src="https://media1.tenor.com/m/6YX4QrCXrgYAAAAd/jerry-hungry.gif"
+    alt="se extrage..."
+    style={{
+      display: 'block',
+      margin: '0 auto',
+      width: '400px',
+      maxWidth: '100%',
+      borderRadius: '16px'
+    }}
+  />
+  <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '12px', fontWeight: 500 }}>
+    Se extrage rețeta...
+  </p>
+</div>
         )}
 
         {/* EXTRACTION ERROR */}
@@ -579,9 +587,17 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
               </>
             ) : (
               <>
-                <img src="https://media1.tenor.com/m/ShDlvYkSEjcAAAAd/cat-funny.gif"
-                  alt="nicio rețetă"
-                  style={{ width: '100%', maxWidth: '300px', borderRadius: '16px', marginBottom: '16px' }} />
+                <img
+  src="https://media1.tenor.com/m/ShDlvYkSEjcAAAAd/cat-funny.gif"
+  alt="nicio rețetă"
+  style={{
+    display: 'block',
+    margin: '0 auto 16px',
+    width: '300px',
+    maxWidth: '100%',
+    borderRadius: '16px'
+  }}
+/>
                 <p style={{ fontSize: '18px', fontWeight: 700, color: '#374151', marginBottom: '8px' }}>Nicio rețetă adăugată</p>
                 <a href="/add" style={{ fontSize: '14px', color: '#1a6b3c', fontWeight: 600, textDecoration: 'underline' }}>Adaugă prima ta rețetă</a>
               </>
