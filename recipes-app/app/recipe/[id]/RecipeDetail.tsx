@@ -20,6 +20,14 @@ type Recipe = {
   user_id?: string
 }
 
+const categoryColors: Record<string, { bg: string; text: string }> = {
+  paste: { bg: '#d1fae5', text: '#065f46' },
+  desert: { bg: '#fef3c7', text: '#92400e' },
+  supe: { bg: '#dbeafe', text: '#1e40af' },
+  salads: { bg: '#ecfccb', text: '#3f6212' },
+  general: { bg: '#f3f4f6', text: '#374151' },
+}
+
 export default function RecipeDetail({ recipe, community, userId }: { recipe: Recipe, community: Recipe[], userId?: string }) {
   const [servings, setServings] = useState(recipe.base_servings)
   const [deleting, setDeleting] = useState(false)
@@ -41,74 +49,132 @@ export default function RecipeDetail({ recipe, community, userId }: { recipe: Re
   }
 
   const isOwner = userId && recipe.user_id === userId
+  const catStyle = categoryColors[(recipe.category || 'general').toLowerCase()] || categoryColors.general
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F4F7F6', fontFamily: 'Outfit, sans-serif' }}>
-      <nav style={{ background: '#1E293B', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
-        <a href="/dashboard" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: '0.9rem' }}>← Înapoi</a>
-        {isOwner && (
-          <button onClick={handleDelete} disabled={deleting}
-            style={{ background: 'none', border: '1px solid #E74C3C', borderRadius: '8px', color: '#E74C3C', padding: '6px 14px', cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 600, fontSize: '0.8rem' }}>
-            {deleting ? 'Se șterge...' : '🗑️ Șterge'}
-          </button>
-        )}
+    <div style={{ minHeight: '100vh', background: '#f7f7f5', fontFamily: 'Outfit, sans-serif' }}>
+      {/* NAV */}
+      <nav style={{
+        position: 'sticky', top: 0, zIndex: 100,
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid #e5e5e1',
+        height: '60px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 32px'
+      }}>
+        <a href="/dashboard" style={{ fontSize: '18px', fontWeight: 800, color: '#111', letterSpacing: '-0.03em', textDecoration: 'none' }}>
+          rețete<span style={{ color: '#1a6b3c' }}>.</span>
+        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <a href="/dashboard" style={{
+            color: '#6b7280', textDecoration: 'none', fontSize: '13px', fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: '6px'
+          }}>
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Înapoi
+          </a>
+          {isOwner && (
+            <button onClick={handleDelete} disabled={deleting}
+              style={{
+                background: 'none', border: '1.5px solid #dc2626', borderRadius: '8px',
+                color: '#dc2626', padding: '6px 14px', cursor: 'pointer',
+                fontFamily: 'Outfit', fontWeight: 600, fontSize: '12px',
+                transition: 'all 0.15s'
+              }}>
+              {deleting ? 'Se șterge...' : '🗑️ Șterge'}
+            </button>
+          )}
+        </div>
       </nav>
 
-      <main style={{ maxWidth: '680px', margin: '0 auto', padding: '24px 16px' }}>
-        <div style={{ marginBottom: '20px' }}>
+      {/* MAIN */}
+      <main style={{ maxWidth: '780px', margin: '0 auto', padding: '32px 20px 100px' }}>
+        {/* RECIPE HEADER */}
+        <div style={{ marginBottom: '24px' }}>
           {recipe.category && (
-            <span style={{ background: '#F0FDF4', color: '#2D5A27', padding: '2px 10px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase' }}>
+            <span style={{
+              background: catStyle.bg, color: catStyle.text, padding: '3px 10px', borderRadius: '5px',
+              fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em'
+            }}>
               {recipe.category}
             </span>
           )}
-          <h1 style={{ margin: '8px 0 6px', fontSize: '1.6rem', fontWeight: 700, color: '#1A202C', lineHeight: 1.2 }}>{recipe.title}</h1>
-          {recipe.description && <p style={{ margin: '0 0 10px', fontSize: '0.9rem', color: '#718096', lineHeight: 1.6 }}>{recipe.description}</p>}
-          <div style={{ display: 'flex', gap: '16px', fontSize: '0.8rem', color: '#94A3B8', flexWrap: 'wrap' }}>
+          <h1 style={{ margin: '10px 0 8px', fontSize: '28px', fontWeight: 900, color: '#111', lineHeight: 1.1, letterSpacing: '-0.04em' }}>{recipe.title}</h1>
+          {recipe.description && <p style={{ margin: '0 0 12px', fontSize: '15px', color: '#6b7280', lineHeight: 1.6 }}>{recipe.description}</p>}
+          <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#9ca3af', flexWrap: 'wrap' }}>
             {recipe.prep_time && <span>Prep: {recipe.prep_time} min</span>}
             {recipe.cook_time && <span>Gătit: {recipe.cook_time} min</span>}
-            {recipe.source_url && <a href={recipe.source_url} target="_blank" style={{ color: '#2D5A27' }}>Sursă originală</a>}
+            {recipe.source_url && <a href={recipe.source_url} target="_blank" style={{ color: '#1a6b3c', textDecoration: 'none', fontWeight: 600 }}>Sursă originală →</a>}
           </div>
         </div>
 
-        <div style={{ background: 'white', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1A202C' }}>Porții</span>
+        {/* SERVINGS */}
+        <div style={{
+          background: 'white', borderRadius: '14px', padding: '18px 22px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)', border: '1px solid #e5e5e1',
+          marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        }}>
+          <span style={{ fontWeight: 700, fontSize: '14px', color: '#111' }}>Porții</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <button onClick={() => setServings(s => Math.max(1, s - 1))}
-              style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1px solid #E2E8F0', background: 'white', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 600, color: '#4A5568', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
-            <span style={{ fontWeight: 700, fontSize: '1.1rem', minWidth: '60px', textAlign: 'center' }}>{portii(servings)}</span>
+              style={{
+                width: '36px', height: '36px', borderRadius: '10px', border: '1.5px solid #e5e5e1',
+                background: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: 600, color: '#4A5568',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s'
+              }}>−</button>
+            <span style={{ fontWeight: 800, fontSize: '18px', minWidth: '70px', textAlign: 'center' }}>{portii(servings)}</span>
             <button onClick={() => setServings(s => Math.min(20, s + 1))}
-              style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1px solid #E2E8F0', background: 'white', cursor: 'pointer', fontSize: '1.1rem', fontWeight: 600, color: '#4A5568', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+              style={{
+                width: '36px', height: '36px', borderRadius: '10px', border: '1.5px solid #e5e5e1',
+                background: 'white', cursor: 'pointer', fontSize: '18px', fontWeight: 600, color: '#4A5568',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s'
+              }}>+</button>
           </div>
         </div>
 
+        {/* INGREDIENTS */}
         {recipe.ingredients && recipe.ingredients.length > 0 && (
-          <div style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: '14px' }}>
-            <h2 style={{ margin: '0 0 14px', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#1A202C' }}>Ingrediente</h2>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{
+            background: 'white', borderRadius: '14px', padding: '24px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)', border: '1px solid #e5e5e1',
+            marginBottom: '14px'
+          }}>
+            <h2 style={{ margin: '0 0 16px', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#111' }}>Ingrediente</h2>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {recipe.ingredients.map(ing => (
-                <li key={ing.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', borderBottom: '1px solid #F8FAFC', paddingBottom: '8px' }}>
+                <li key={ing.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', borderBottom: '1px solid #f3f4f6', paddingBottom: '10px' }}>
                   <span style={{ color: '#4A5568' }}>{ing.name}</span>
-                  <span style={{ fontWeight: 600, color: '#1A202C' }}>{fmt(ing.amount)} {ing.unit || ''}</span>
+                  <span style={{ fontWeight: 600, color: '#111' }}>{fmt(ing.amount)} {ing.unit || ''}</span>
                 </li>
               ))}
             </ul>
           </div>
         )}
 
+        {/* STEPS */}
         {recipe.steps && recipe.steps.length > 0 && (
-          <div style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: '14px' }}>
-            <h2 style={{ margin: '0 0 16px', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#1A202C' }}>Mod de preparare</h2>
-            <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{
+            background: 'white', borderRadius: '14px', padding: '24px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)', border: '1px solid #e5e5e1',
+            marginBottom: '14px'
+          }}>
+            <h2 style={{ margin: '0 0 18px', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#111' }}>Mod de preparare</h2>
+            <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '18px' }}>
               {recipe.steps.map((step, i) => (
-                <li key={step.id} style={{ display: 'flex', gap: '14px' }}>
-                  <span style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#F0FDF4', color: '#2D5A27', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <li key={step.id} style={{ display: 'flex', gap: '16px' }}>
+                  <span style={{
+                    width: '30px', height: '30px', borderRadius: '50%', background: '#d1fae5',
+                    color: '#065f46', fontSize: '13px', fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
+                  }}>
                     {i + 1}
                   </span>
                   <div>
-                    <p style={{ margin: '0 0 4px', fontWeight: 600, fontSize: '0.95rem', color: '#1A202C' }}>{step.title}</p>
-                    <p style={{ margin: 0, fontSize: '0.88rem', color: '#718096', lineHeight: 1.7 }}>{step.content}</p>
+                    <p style={{ margin: '0 0 4px', fontWeight: 600, fontSize: '15px', color: '#111' }}>{step.title}</p>
+                    <p style={{ margin: 0, fontSize: '14px', color: '#6b7280', lineHeight: 1.7 }}>{step.content}</p>
                     {step.timerSeconds && (
-                      <span style={{ fontSize: '0.78rem', color: '#E67E22', marginTop: '4px', display: 'inline-block' }}>
+                      <span style={{ fontSize: '13px', color: '#e67e22', marginTop: '6px', display: 'inline-block' }}>
                         ⏱ {Math.floor(step.timerSeconds / 60)} min
                       </span>
                     )}
@@ -119,21 +185,33 @@ export default function RecipeDetail({ recipe, community, userId }: { recipe: Re
           </div>
         )}
 
+        {/* NOTES */}
         {recipe.notes && (
-          <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '10px', padding: '14px 16px', marginBottom: '24px' }}>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#92400E', fontStyle: 'italic' }}>{recipe.notes}</p>
+          <div style={{
+            background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '12px',
+            padding: '16px 18px', marginBottom: '24px'
+          }}>
+            <p style={{ margin: 0, fontSize: '14px', color: '#92400e', fontStyle: 'italic' }}>{recipe.notes}</p>
           </div>
         )}
 
+        {/* COMMUNITY RECIPES */}
         {community.length > 0 && (
           <div>
-            <h2 style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94A3B8', marginBottom: '12px' }}>Alte rețete</h2>
+            <h2 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#9ca3af', marginBottom: '14px' }}>Alte rețete</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {community.map(r => (
                 <a key={r.id} href={`/recipe/${r.id}`} style={{ textDecoration: 'none' }}>
-                  <div style={{ background: 'white', borderRadius: '10px', padding: '14px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)', borderLeft: '3px solid #E2E8F0' }}>
-                    <h3 style={{ margin: '0 0 4px', fontSize: '0.95rem', fontWeight: 600, color: '#1A202C' }}>{r.title}</h3>
-                    {r.description && <p style={{ margin: 0, fontSize: '0.82rem', color: '#94A3B8' }}>{r.description}</p>}
+                  <div style={{
+                    background: 'white', borderRadius: '12px', padding: '16px 20px',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)', border: '1px solid #e5e5e1',
+                    borderLeft: '4px solid #e5e5e1', transition: 'transform 0.15s, box-shadow 0.15s'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.07)' }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)' }}
+                  >
+                    <h3 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 700, color: '#111', letterSpacing: '-0.02em' }}>{r.title}</h3>
+                    {r.description && <p style={{ margin: 0, fontSize: '13px', color: '#9ca3af' }}>{r.description}</p>}
                   </div>
                 </a>
               ))}
