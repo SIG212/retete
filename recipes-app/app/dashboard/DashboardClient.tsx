@@ -579,7 +579,7 @@ export default function DashboardClient({ recipes: initialRecipes }: { recipes: 
               </>
             ) : (
               <>
-                <img src="https://media.tenor.com/bowl-cat-gif-17739756832503037272/tenor.gif"
+                <img src="https://media1.tenor.com/m/ShDlvYkSEjcAAAAd/cat-funny.gif"
                   alt="nicio rețetă"
                   style={{ width: '100%', maxWidth: '300px', borderRadius: '16px', marginBottom: '16px' }} />
                 <p style={{ fontSize: '18px', fontWeight: 700, color: '#374151', marginBottom: '8px' }}>Nicio rețetă adăugată</p>
