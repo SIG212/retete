@@ -74,7 +74,7 @@ export default function LoginPage() {
       {/* FOOTER */}
       <footer style={{ padding: '20px', textAlign: 'center', fontSize: '0.8rem' }}>
         <a href="https://sig212.github.io/builder" target="_blank" rel="noopener noreferrer" style={{ color: '#9ca3af', textDecoration: 'none' }}>
-          Făcut cu drag în România 🇷🇴
+          sig212.github.io/builder
         </a>
       </footer>
     </div>
