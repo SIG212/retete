@@ -30,7 +30,7 @@ async function getTextFromSource(mode: string, input: string): Promise<{ text?: 
       })
       const html = await res.text()
       if (!html.includes('challenge-platform') && !html.includes('Just a moment')) {
-        return { text: html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 4000) }
+        return { text: html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 8000) }
       }
     } catch {}
     const jinaRes = await fetch(`https://r.jina.ai/${input}`, {
@@ -38,7 +38,7 @@ async function getTextFromSource(mode: string, input: string): Promise<{ text?: 
       headers: { 'Accept': 'text/plain' }
     })
     const text = await jinaRes.text()
-    return { text: text.slice(0, 4000) }
+    return { text: text.slice(0, 8000) }
   }
 
   return { text: input }
