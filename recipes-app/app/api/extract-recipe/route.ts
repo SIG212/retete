@@ -71,6 +71,7 @@ export async function POST(request: Request) {
     }
 
     // URL si text merg prin DeepSeek din Next.js
+    console.log('TEXT TRIMIS LA DEEPSEEK:', source.text?.slice(0, 500))
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
