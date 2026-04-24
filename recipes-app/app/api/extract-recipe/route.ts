@@ -29,7 +29,13 @@ async function getTextFromSource(mode: string, input: string): Promise<{ text?: 
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
       })
       const html = await res.text()
-      if (!html.includes('challenge-platform') && !html.includes('Just a moment')) {
+      const isBlocked = html.includes('challenge-platform') || 
+        html.includes('Just a moment') || 
+        html.includes('nowprocket') ||
+        html.includes('RocketLazy') ||
+        html.length < 500
+
+      if (!isBlocked) {
         return { text: html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').slice(0, 8000) }
       }
     } catch {}
